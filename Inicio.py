@@ -45,13 +45,6 @@ st.markdown("""
         color: #64748B;
         font-weight: 500;
     }
-    .sidebar-section {
-        background: #F8FAFC;
-        padding: 1.5rem;
-        border-radius: 12px;
-        margin: 1rem 0;
-        border: 1px solid #E2E8F0;
-    }
     .data-section {
         background: #F0F9FF;
         border: 1px solid #BAE6FD;
@@ -117,23 +110,19 @@ st.markdown('<div class="subtitle">Monitoreo en tiempo real vía MQTT</div>', un
 
 # Sidebar - Configuración
 with st.sidebar:
-    st.markdown("### ⚙️ Configuración")
+    st.markdown("### Configuración")
     
     with st.container():
-        st.markdown('<div class="sidebar-section">', unsafe_allow_html=True)
         broker = st.text_input('Broker MQTT', value='broker.mqttdashboard.com')
         port = st.number_input('Puerto', value=1883, min_value=1, max_value=65535)
         topic = st.text_input('Tópico', value='Sensor/THP2')
         client_id = st.text_input('ID del Cliente', value='streamlit_client')
-        st.markdown('</div>', unsafe_allow_html=True)
 
 # Información
 with st.expander('ℹ️ Guía rápida', expanded=False):
     st.markdown("""
     **Brokers públicos para pruebas:**
     - broker.mqttdashboard.com
-    - test.mosquitto.org  
-    - broker.hivemq.com
     
     **Puerto estándar:** 1883
     """)
@@ -147,7 +136,7 @@ if st.button('🔄 Obtener Datos', use_container_width=True):
 # Mostrar resultados
 if st.session_state.sensor_data:
     st.markdown("---")
-    st.markdown("### 📊 Datos del Sensor")
+    st.markdown("### Datos del Sensor")
     
     data = st.session_state.sensor_data
     
