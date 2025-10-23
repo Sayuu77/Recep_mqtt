@@ -5,10 +5,75 @@ import time
 
 # Configuración de la página
 st.set_page_config(
-    page_title="Lector de Sensor MQTT",
+    page_title="Sensor MQTT Reader",
     page_icon="📡",
     layout="centered"
 )
+
+# Estilos minimalistas en azul pastel
+st.markdown("""
+<style>
+    .main-title {
+        font-size: 2.5rem;
+        color: #2563EB;
+        text-align: center;
+        margin-bottom: 1rem;
+        font-weight: 600;
+    }
+    .subtitle {
+        font-size: 1.1rem;
+        color: #64748B;
+        text-align: center;
+        margin-bottom: 2rem;
+    }
+    .metric-card {
+        background: #F0F9FF;
+        border: 1px solid #BAE6FD;
+        border-radius: 12px;
+        padding: 1.5rem;
+        text-align: center;
+        margin: 0.5rem;
+    }
+    .metric-value {
+        font-size: 1.8rem;
+        font-weight: 600;
+        color: #2563EB;
+        margin-bottom: 0.5rem;
+    }
+    .metric-label {
+        font-size: 0.9rem;
+        color: #64748B;
+        font-weight: 500;
+    }
+    .sidebar-section {
+        background: #F8FAFC;
+        padding: 1.5rem;
+        border-radius: 12px;
+        margin: 1rem 0;
+        border: 1px solid #E2E8F0;
+    }
+    .data-section {
+        background: #F0F9FF;
+        border: 1px solid #BAE6FD;
+        border-radius: 12px;
+        padding: 2rem;
+        margin: 1rem 0;
+    }
+    .stButton button {
+        background: #2563EB;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        padding: 12px 24px;
+        font-weight: 500;
+        width: 100%;
+    }
+    .stButton button:hover {
+        background: #1D4ED8;
+        color: white;
+    }
+</style>
+""", unsafe_allow_html=True)
 
 # Variables de estado
 if 'sensor_data' not in st.session_state:
@@ -24,7 +89,6 @@ def get_mqtt_message(broker, port, topic, client_id):
             message_received["payload"] = payload
             message_received["received"] = True
         except:
-            # Si no es JSON, guardar como texto
             message_received["payload"] = message.payload.decode()
             message_received["received"] = True
     
@@ -35,7 +99,6 @@ def get_mqtt_message(broker, port, topic, client_id):
         client.subscribe(topic)
         client.loop_start()
         
-        # Esperar máximo 5 segundos
         timeout = time.time() + 5
         while not message_received["received"] and time.time() < timeout:
             time.sleep(0.1)
@@ -48,74 +111,74 @@ def get_mqtt_message(broker, port, topic, client_id):
     except Exception as e:
         return {"error": str(e)}
 
+# Header
+st.markdown('<div class="main-title">📡 Sensor Reader</div>', unsafe_allow_html=True)
+st.markdown('<div class="subtitle">Monitoreo en tiempo real vía MQTT</div>', unsafe_allow_html=True)
+
 # Sidebar - Configuración
 with st.sidebar:
-    st.subheader('⚙️ Configuración de Conexión')
+    st.markdown("### ⚙️ Configuración")
     
-    broker = st.text_input('Broker MQTT', value='broker.mqttdashboard.com', 
-                           help='Dirección del broker MQTT')
-    
-    port = st.number_input('Puerto', value=1883, min_value=1, max_value=65535,
-                           help='Puerto del broker (generalmente 1883)')
-    
-    topic = st.text_input('Tópico', value='Sensor/THP2',
-                          help='Tópico MQTT a suscribirse')
-    
-    client_id = st.text_input('ID del Cliente', value='streamlit_client',
-                              help='Identificador único para este cliente')
+    with st.container():
+        st.markdown('<div class="sidebar-section">', unsafe_allow_html=True)
+        broker = st.text_input('Broker MQTT', value='broker.mqttdashboard.com')
+        port = st.number_input('Puerto', value=1883, min_value=1, max_value=65535)
+        topic = st.text_input('Tópico', value='Sensor/THP2')
+        client_id = st.text_input('ID del Cliente', value='streamlit_client')
+        st.markdown('</div>', unsafe_allow_html=True)
 
-# Título
-st.title('📡 Lector de Sensor MQTT')
-
-# Información al inicio
-with st.expander('ℹ️ Información', expanded=False):
+# Información
+with st.expander('ℹ️ Guía rápida', expanded=False):
     st.markdown("""
-    ### Cómo usar esta aplicación:
-    
-    1. **Broker MQTT**: Ingresa la dirección del servidor MQTT en el sidebar
-    2. **Puerto**: Generalmente es 1883 para conexiones no seguras
-    3. **Tópico**: El canal al que deseas suscribirte
-    4. **ID del Cliente**: Un identificador único para esta conexión
-    5. Haz clic en **Obtener Datos** para recibir el mensaje más reciente
-    
-    ### Brokers públicos para pruebas:
+    **Brokers públicos para pruebas:**
     - broker.mqttdashboard.com
-    - test.mosquitto.org
+    - test.mosquitto.org  
     - broker.hivemq.com
+    
+    **Puerto estándar:** 1883
     """)
 
-st.divider()
-
-# Botón para obtener datos
-if st.button('🔄 Obtener Datos del Sensor', use_container_width=True):
-    with st.spinner('Conectando al broker y esperando datos...'):
+# Botón principal
+if st.button('🔄 Obtener Datos', use_container_width=True):
+    with st.spinner('Conectando al broker...'):
         sensor_data = get_mqtt_message(broker, int(port), topic, client_id)
         st.session_state.sensor_data = sensor_data
 
 # Mostrar resultados
 if st.session_state.sensor_data:
-    st.divider()
-    st.subheader('📊 Datos Recibidos')
+    st.markdown("---")
+    st.markdown("### 📊 Datos del Sensor")
     
     data = st.session_state.sensor_data
     
-    # Verificar si hay error
     if isinstance(data, dict) and 'error' in data:
-        st.error(f"❌ Error de conexión: {data['error']}")
+        st.error(f"Error de conexión: {data['error']}")
     else:
-        st.success('✅ Datos recibidos correctamente')
+        st.success('Conexión exitosa')
         
-        # Mostrar datos en formato JSON
         if isinstance(data, dict):
-            # Mostrar cada campo en una métrica
+            # Mostrar métricas en grid
             cols = st.columns(len(data))
             for i, (key, value) in enumerate(data.items()):
                 with cols[i]:
-                    st.metric(label=key, value=value)
+                    st.markdown(f"""
+                    <div class="metric-card">
+                        <div class="metric-value">{value}</div>
+                        <div class="metric-label">{key}</div>
+                    </div>
+                    """, unsafe_allow_html=True)
             
-            # Mostrar JSON completo
-            with st.expander('Ver JSON completo'):
+            # JSON completo
+            with st.expander('Ver datos JSON'):
                 st.json(data)
         else:
-            # Si no es diccionario, mostrar como texto
             st.code(data)
+
+# Footer
+st.markdown("---")
+st.markdown(
+    "<div style='text-align: center; color: #64748B; padding: 1rem;'>"
+    "Sensor MQTT Reader • Monitoreo en tiempo real"
+    "</div>",
+    unsafe_allow_html=True
+)
